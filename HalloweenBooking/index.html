@@ -87,20 +87,6 @@
         // Detect target string inside iframe DOM and alert user
         function checkIframeContent() {
             hideLoading();
-            try {
-                const iframe = document.getElementById('appIframe');
-                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-
-                if (iframeDoc && iframeDoc.body) {
-                    const htmlContent = iframeDoc.body.innerHTML;
-                    if (htmlContent.includes('<strong>www.google.com</strong>')) {
-                        alert('請切換至學校 Google 帳號 (Please switch to your school Google account)!');
-                    }
-                }
-            } catch (err) {
-                // Cross-Origin security policies will block DOM inspection if domains do not match
-                console.warn('Unable to inspect iframe DOM due to same-origin restrictions:', err);
-            }
         }
 
         // Safety timeout for loading indicator
