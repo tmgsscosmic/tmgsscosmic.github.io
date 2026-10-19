@@ -1,1 +1,643 @@
-LOL HAHAAAA
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TMGSS Cosmic</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #04020a;
+      font-family: sans-serif;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+    .ui-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 50vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .title-svg {
+      width: 70%;
+      max-width: 70vw;
+      height: auto;
+      pointer-events: auto;
+      display: block;
+    }
+    .menu-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+      width: 100%;
+      pointer-events: auto;
+    }
+    .menu-btn {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 8px 20px;
+      border-radius: 20px;
+      text-decoration: none;
+      font-size: clamp(14px, 1.8vw, 18px);
+      transition: all 0.3s ease;
+      backdrop-filter: blur(4px);
+      text-align: center;
+    }
+    .menu-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.6);
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <div class="ui-overlay">
+    <img src="IMG/cosmicTitle.svg" class="title-svg" alt="Cosmic Title">
+    <div id="menuContainer" class="menu-container"></div>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <script>
+    // Menu Dictionary
+    const menuDictionary = {
+      "Instagram": "https://www.instagram.com/tmgss_cosmic/",
+      "萬聖節鬼屋預約": "/halloweenbooking/"
+    };
+
+    // Dynamically create menu buttons placed under SVG title aligned vertically
+    const menuContainer = document.getElementById("menuContainer");
+    Object.entries(menuDictionary).forEach(([text, link]) => {
+      const btn = document.createElement("a");
+      btn.href = link;
+      btn.textContent = text;
+      btn.className = "menu-btn";
+      menuContainer.appendChild(btn);
+    });
+
+    // Image List for dynamic floating objects
+    const floatImages = ["IMG/1.png", "IMG/2.png"];
+
+    // Dynamically create floating, moving, and draggable images
+    floatImages.forEach((src) => {
+      const img = document.createElement("img");
+      img.src = src;
+      img.style.position = "absolute";
+      img.style.left = Math.random() * (window.innerWidth - 120) + "px";
+      img.style.top = Math.random() * (window.innerHeight - 120) + "px";
+      img.style.cursor = "grab";
+      img.style.zIndex = "5";
+      img.style.userSelect = "none";
+
+      document.body.appendChild(img);
+
+      let x = parseFloat(img.style.left);
+      let y = parseFloat(img.style.top);
+      let vx = (Math.random() - 0.5) * 1.5;
+      let vy = (Math.random() - 0.5) * 1.5;
+      let isDragging = false;
+      let dragStartX = 0;
+      let dragStartY = 0;
+
+      function floatAnimation() {
+        if (!isDragging) {
+          x += vx;
+          y += vy;
+
+          const w = img.offsetWidth || 100;
+          const h = img.offsetHeight || 100;
+
+          if (x <= 0 || x + w >= window.innerWidth) vx *= -1;
+          if (y <= 0 || y + h >= window.innerHeight) vy *= -1;
+
+          x = Math.max(0, Math.min(window.innerWidth - w, x));
+          y = Math.max(0, Math.min(window.innerHeight - h, y));
+
+          img.style.left = x + "px";
+          img.style.top = y + "px";
+        }
+        requestAnimationFrame(floatAnimation);
+      }
+      requestAnimationFrame(floatAnimation);
+
+      img.addEventListener("pointerdown", (e) => {
+        isDragging = true;
+        img.style.cursor = "grabbing";
+        dragStartX = e.clientX - x;
+        dragStartY = e.clientY - y;
+        img.setPointerCapture(e.pointerId);
+      });
+
+      img.addEventListener("pointermove", (e) => {
+        if (isDragging) {
+          x = e.clientX - dragStartX;
+          y = e.clientY - dragStartY;
+          img.style.left = x + "px";
+          img.style.top = y + "px";
+        }
+      });
+
+      const stopDrag = () => {
+        if (isDragging) {
+          isDragging = false;
+          img.style.cursor = "grab";
+        }
+      };
+
+      img.addEventListener("pointerup", stopDrag);
+      img.addEventListener("pointercancel", stopDrag);
+    });
+
+    const MAX_DT = 1 / 30;
+
+    function run(t, e, { preview: n = !1, maxDpr: o = 2, onError: r } = {}) {
+      function i() {
+        if (!h) {
+          k();
+          try { s.stop?.(); } catch (t) {}
+          h = !0;
+          C.disconnect();
+          D.disconnect();
+          m.forEach((t => t()));
+        }
+      }
+      const p = t.getContext("2d", { alpha: !1 }),
+        a = {
+          canvas: t,
+          ctx: p,
+          width: 0,
+          height: 0,
+          dpr: 1,
+          preview: n,
+          time: 0,
+          frameCount: 0,
+          pointer: { x: 0, y: 0, px: 0, py: 0, down: !1, inside: !1, button: 0, active: !1, lastActive: -1 / 0 },
+          keys: new Set,
+          get idle() { return a.time - a.pointer.lastActive > 4; }
+        };
+      let s = {}, c = null, l = null, u = !1, d = !0, h = !1;
+      const m = [], f = (t, e, n, o) => {
+        t.addEventListener(e, n, o);
+        m.push((() => t.removeEventListener(e, n, o)));
+      }, y = (t, ...e) => {
+        if (!h && s[t]) try { return s[t](...e); } catch (t) { return void w(t); }
+      }, w = t => {
+        if (i(), !r) throw t;
+        r(t);
+      }, v = () => p.setTransform(a.dpr, 0, 0, a.dpr, 0, 0),
+      M = () => {
+        const e = t.getBoundingClientRect(),
+          n = Math.max(1, Math.round(e.width)),
+          r = Math.max(1, Math.round(e.height)),
+          i = Math.min(window.devicePixelRatio || 1, o);
+        n === a.width && r === a.height && i === a.dpr || (a.width = n, a.height = r, a.dpr = i, t.width = Math.round(n * i), t.height = Math.round(r * i), v(), y("resize"));
+      }, x = t => {
+        if (c = null, h) return;
+        const e = null === l ? 1 / 60 : Math.min((t - l) / 1e3, MAX_DT);
+        l = t, a.time += e, a.frameCount += 1, v(), y("frame", e, a.time), a.pointer.px = a.pointer.x, a.pointer.py = a.pointer.y, g();
+      }, g = () => {
+        h || u || !d || null !== c || document.hidden || (c = requestAnimationFrame(x));
+      }, k = () => {
+        null !== c && (cancelAnimationFrame(c), c = null), l = null;
+      }, b = e => {
+        const n = t.getBoundingClientRect();
+        a.pointer.x = e.clientX - n.left, a.pointer.y = e.clientY - n.top;
+      }, A = () => {
+        a.pointer.active = !0, a.pointer.lastActive = a.time;
+      };
+
+      if (!n) {
+        f(t, "pointerdown", (e => {
+          b(e), a.pointer.px = a.pointer.x, a.pointer.py = a.pointer.y, a.pointer.down = !0, a.pointer.button = e.button, a.pointer.shift = e.shiftKey, A(), t.setPointerCapture?.(e.pointerId), y("pointerdown", a.pointer);
+        })),
+        f(t, "pointermove", (t => {
+          b(t), a.pointer.inside = !0, A(), y("pointermove", a.pointer);
+        }));
+        const e = t => {
+          a.pointer.down && (b(t), a.pointer.down = !1, A(), y("pointerup", a.pointer));
+        };
+        f(t, "pointerup", e), f(t, "pointercancel", e), f(t, "pointerleave", (() => { a.pointer.inside = !1; })), f(t, "contextmenu", (t => t.preventDefault())), f(t, "keydown", (t => {
+          a.keys.add(t.key), A(), !0 === y("keydown", t) && (t.preventDefault(), t.stopPropagation());
+        })), f(t, "keyup", (t => {
+          a.keys.delete(t.key), y("keyup", t);
+        })), f(t, "blur", (() => a.keys.clear()));
+      }
+
+      const C = new ResizeObserver(M);
+      C.observe(t);
+      const D = new IntersectionObserver((([t]) => {
+        d = t.isIntersecting, d ? g() : k();
+      }));
+      D.observe(t);
+      f(document, "visibilitychange", (() => document.hidden ? k() : g()));
+
+      try {
+        s = e(a) || {}, M();
+      } catch (t) {
+        return w(t), { stop() {}, pause() {}, play() {}, get paused() { return !0; }, app: a };
+      }
+
+      return g(), {
+        app: a,
+        stop: i,
+        pause() { u = !0, k(); },
+        play() { u = !1, g(); },
+        warmUp(t) {
+          const e = Math.round(60 * t);
+          for (let t = 0; t < e && !h; t += 1) a.time += 1 / 60, a.frameCount += 1, v(), y("frame", 1 / 60, a.time);
+        },
+        get paused() { return u; }
+      };
+    }
+
+    const clamp = (t, e, n) => Math.min(n, Math.max(e, t));
+    const lerp = (t, e, n) => t + (e - t) * n;
+
+    const TAU = 2 * Math.PI, TWIST = 4.6, PATTERN_SPEED = TAU / 160;
+    const gauss = () => .866 * (Math.random() + Math.random() + Math.random() + Math.random() - 2);
+
+    function createGalaxyApp(t) {
+      const { ctx: e } = t,
+        a = document.createElement("canvas"), n = a.getContext("2d"),
+        o = document.createElement("canvas"), r = o.getContext("2d"),
+        l = document.createElement("canvas"), i = l.getContext("2d"),
+        h = document.createElement("canvas"), s = h.getContext("2d");
+
+      let d = 0, c = 0, m = null, p = null, M = null, u = null, w = null, g = 0, f = 0, v = null, y = null, x = 0, A = 1,
+        b = null, E = null, T = null, S = null, I = null, F = null, C = null, L = null, z = null, P = null;
+
+      const R = 4096, U = 6, D = new Uint8Array(R);
+      for (let t = 0; t < R; t += 1) {
+        const e = t / R * U;
+        D[t] = Math.round(255 * (1 - Math.exp(.75 * -e)));
+      }
+
+      const k = new Float32Array(256);
+      for (let t = 0; t < 256; t += 1) k[t] = Math.exp(-t / 255 * 3);
+
+      const O = { tilt: 1, spin: .4, zoom: 1, userTilt: 1, userSpin: .4, blend: 1 };
+      let Y = null;
+      const $ = new Map;
+      let _ = 0;
+
+      const G = t => t < .3 ? lerp(.1, .42, t / .3) : lerp(.42, .2, (t - .3) / .7),
+        N = t => .9 / (t + .12),
+        W = t => {
+          const e = .12 + .85 * Math.pow(Math.random(), .8);
+          b[t] = e,
+          E[t] = (Math.random() < .5 ? 0 : Math.PI) + .18 * gauss() + (4 === L[t] ? -.12 : .3),
+          T[t] = .006 * gauss(),
+          z[t] = 0,
+          P[t] = (.3 + .35 * Math.random()) / N(e);
+        },
+        X = () => {
+          const e = t.preview ? .35 : 1,
+            a = Math.round(4e4 * e),
+            n = Math.round(6e3 * e),
+            o = Math.round(7e3 * e),
+            r = Math.round(420 * e),
+            l = Math.round(7e3 * e);
+
+          x = a + n + o + r + l,
+          A = Math.round(x / e),
+          b = new Float32Array(x),
+          E = new Float32Array(x),
+          T = new Float32Array(x),
+          S = new Float32Array(x),
+          I = new Float32Array(x),
+          F = new Float32Array(x),
+          L = new Uint8Array(x),
+          C = new Float32Array(x),
+          z = new Float32Array(x),
+          P = new Float32Array(x);
+
+          for (let t = 0; t < x; t += 1) C[t] = .09 * gauss();
+
+          const i = 1;
+          let h = 0;
+
+          for (let t = 0; t < a; t += 1, h += 1) {
+            let tVal = 2;
+            for (; tVal > 1.15; ) tVal = .24 * -Math.log((1 - .999 * Math.random()) * (1 - .999 * Math.random()));
+            b[h] = tVal;
+            E[h] = Math.random() * TAU;
+            T[h] = gauss() * (.012 + .02 * (1 - tVal));
+
+            const e = Math.random();
+            const intensity = (.28 + .3 * Math.random()) * i * (.4 + .6 * Math.min(1, tVal / .3)) * clamp((1.15 - tVal) / .4, 0, 1);
+
+            const rNorm = clamp(tVal / 1.15, 0, 1);
+            let rCol, gCol, bCol;
+            if (rNorm < 0.32) {
+              const u = rNorm / 0.32;
+              rCol = lerp(1.0, 0.82, u);
+              gCol = lerp(0.92, 0.58, u);
+              bCol = lerp(0.62, 0.96, u);
+            } else {
+              const u = (rNorm - 0.32) / 0.68;
+              rCol = lerp(0.82, 0.22, u);
+              gCol = lerp(0.58, 0.55, u);
+              bCol = lerp(0.96, 1.0, u);
+            }
+
+            S[h] = intensity * lerp(1, rCol, e * tVal);
+            I[h] = intensity * lerp(.86, gCol, e);
+            F[h] = intensity * lerp(.7, bCol, e * tVal);
+            L[h] = 0;
+          }
+
+          for (let t = 0; t < n; t += 1, h += 1) {
+            const tVal = .1 * Math.abs(gauss());
+            b[h] = tVal;
+            E[h] = Math.random() * TAU;
+            T[h] = .07 * gauss() * (1 - 3 * tVal);
+            const e = (.06 + .08 * Math.random()) * i;
+            S[h] = e * 1.0;
+            I[h] = e * 0.88;
+            F[h] = e * 0.58;
+            L[h] = 1;
+          }
+
+          for (let t = 0; t < o; t += 1, h += 1) {
+            L[h] = 2;
+            W(h);
+            z[h] = Math.random() * P[h];
+            const tVal = (.6 + .7 * Math.random()) * i;
+            S[h] = .75 * tVal;
+            I[h] = .52 * tVal;
+            F[h] = 1.15 * tVal;
+          }
+
+          for (let t = 0; t < r; t += 1, h += 1) {
+            L[h] = 3;
+            W(h);
+            z[h] = Math.random() * P[h];
+            const tVal = (.35 + .4 * Math.random()) * i;
+            S[h] = 1.2 * tVal;
+            I[h] = 0.95 * tVal;
+            F[h] = .5 * tVal;
+          }
+
+          for (let t = 0; t < l; t += 1, h += 1) {
+            L[h] = 4;
+            W(h);
+            z[h] = Math.random() * P[h];
+            S[h] = .4 + .4 * Math.random();
+          }
+        },
+        q = () => {
+          h.width = Math.round(t.width * t.dpr);
+          h.height = Math.round(t.height * t.dpr);
+          s.setTransform(t.dpr, 0, 0, t.dpr, 0, 0);
+
+          const e = s.createRadialGradient(t.width / 2, t.height / 2, 0, t.width / 2, t.height / 2, .75 * Math.max(t.width, t.height));
+          e.addColorStop(0, "#1a0c36");
+          e.addColorStop(0.5, "#0d0726");
+          e.addColorStop(1, "#04020a");
+          s.fillStyle = e;
+          s.fillRect(0, 0, t.width, t.height);
+
+          const a = Math.round(t.width * t.height / 800);
+          for (let e = 0; e < a; e += 1) {
+            const xPos = Math.random() * t.width,
+              yPos = Math.random() * t.height,
+              n = Math.pow(Math.random(), 3);
+
+            const starType = Math.random();
+            if (starType < 0.45) {
+              s.fillStyle = `rgba(${220 + Math.round(35 * n)}, ${180 + Math.round(50 * n)}, 255, ${.2 + .7 * n})`;
+            } else if (starType < 0.8) {
+              s.fillStyle = `rgba(255, ${225 + Math.round(30 * n)}, ${170 + Math.round(65 * n)}, ${.2 + .7 * n})`;
+            } else {
+              s.fillStyle = `rgba(${170 + Math.round(60 * n)}, ${210 + Math.round(45 * n)}, 255, ${.2 + .7 * n})`;
+            }
+            s.fillRect(xPos, yPos, n > .8 ? 1.8 : 1, n > .8 ? 1.8 : 1);
+          }
+        },
+        j = () => {
+          const e = Math.min(1, Math.sqrt(56e4 / (t.width * t.height)));
+          d = Math.max(16, Math.round(t.width * e));
+          c = Math.max(16, Math.round(t.height * e));
+          a.width = d;
+          a.height = c;
+          y = n.createImageData(d, c);
+          v = new Uint32Array(y.data.buffer);
+          m = new Float32Array(d * c);
+          p = new Float32Array(d * c);
+          M = new Float32Array(d * c);
+          g = Math.ceil(d / 2);
+          f = Math.ceil(c / 2);
+          u = new Float32Array(g * f);
+          w = new Float32Array(g * f);
+          o.width = Math.max(4, Math.round(d / 4));
+          o.height = Math.max(4, Math.round(c / 4));
+          l.width = Math.max(2, Math.round(d / 16));
+          l.height = Math.max(2, Math.round(c / 16));
+        },
+        B = t => {
+          const e = 1 / (2 * t + 1);
+          for (let a = 0; a < f; a += 1) {
+            const n = a * g;
+            let o = 0;
+            for (let e = -t; e <= t; e += 1) o += u[n + clamp(e, 0, g - 1)];
+            for (let a = 0; a < g; a += 1) w[n + a] = o * e, o += u[n + Math.min(g - 1, a + t + 1)] - u[n + Math.max(0, a - t)];
+          }
+          for (let a = 0; a < g; a += 1) {
+            let n = 0;
+            for (let e = -t; e <= t; e += 1) n += w[clamp(e, 0, f - 1) * g + a];
+            for (let o = 0; o < f; o += 1) u[o * g + a] = n * e, n += w[Math.min(f - 1, o + t + 1) * g + a] - w[Math.max(0, o - t) * g + a];
+          }
+        },
+        H = (t, e) => {
+          m.fill(0); p.fill(0); M.fill(0); u.fill(0);
+          const a = Math.min(.4 * d, .68 * c) * O.zoom,
+            o = d / 2,
+            r = c / 2,
+            l = Math.cos(O.tilt),
+            i = Math.sin(O.tilt),
+            h = O.spin - e * PATTERN_SPEED,
+            s = 3.2,
+            w = g / d,
+            Y = clamp(Math.pow(a * a / 144400 * (A / x), .8), .12, 4),
+            $ = 2.6 * Y;
+
+          for (let e = 0; e < x; e += 1) {
+            const n = b[e], v = L[e], y = N(n);
+            E[e] -= y * t * .22;
+            let xVal = 1;
+            if (v >= 2) {
+              z[e] += .22 * t;
+              z[e] > P[e] && W(e);
+              const aVal = z[e] / P[e];
+              xVal = Math.min(1, 6 * aVal) * (1 - aVal) * (1 - aVal);
+            }
+            const AVal = G(n) + .4 * C[e],
+              RVal = n * Math.cos(E[e]),
+              UVal = n * (1 - AVal) * Math.sin(E[e]),
+              DVal = (1 === v ? 6 * n : n * TWIST) + h + C[e],
+              kVal = Math.cos(DVal),
+              OVal = Math.sin(DVal),
+              YVal = RVal * kVal - UVal * OVal,
+              _Val = RVal * OVal + UVal * kVal,
+              XVal = T[e],
+              qVal = s / (s + (_Val * i + XVal * l)),
+              jVal = o + YVal * qVal * a,
+              BVal = r + (_Val * l - XVal * i) * qVal * a;
+
+            if (4 === v) {
+              const tIdx = 0 | jVal * w, aIdx = 0 | BVal * w;
+              tIdx >= 0 && aIdx >= 0 && tIdx < g && aIdx < f && (u[aIdx * g + tIdx] += S[e] * xVal * $);
+              continue;
+            }
+
+            if (jVal < 1 || BVal < 1 || jVal >= d - 2 || BVal >= c - 2) continue;
+
+            const HVal = 0 | jVal, JVal = 0 | BVal, KVal = jVal - HVal, QVal = BVal - JVal,
+              VVal = JVal * d + HVal, ZVal = S[e] * xVal, tt = I[e] * xVal, et = F[e] * xVal;
+
+            if (3 === v) {
+              for (let tIdx = -1; tIdx <= 1; tIdx += 1)
+                for (let eIdx = -1; eIdx <= 1; eIdx += 1) {
+                  const aFactor = 0 === eIdx && 0 === tIdx ? 1 : 0 === eIdx || 0 === tIdx ? .55 : .3,
+                    nIdx = VVal + tIdx * d + eIdx;
+                  m[nIdx] += ZVal * aFactor;
+                  p[nIdx] += tt * aFactor;
+                  M[nIdx] += et * aFactor;
+                }
+              continue;
+            }
+
+            const at = (1 - KVal) * (1 - QVal), nt = KVal * (1 - QVal), ot = (1 - KVal) * QVal, rt = KVal * QVal;
+            m[VVal] += ZVal * at; p[VVal] += tt * at; M[VVal] += et * at;
+            m[VVal + 1] += ZVal * nt; p[VVal + 1] += tt * nt; M[VVal + 1] += et * nt;
+            m[VVal + d] += ZVal * ot; p[VVal + d] += tt * ot; M[VVal + d] += et * ot;
+            m[VVal + d + 1] += ZVal * rt; p[VVal + d + 1] += tt * rt; M[VVal + d + 1] += et * rt;
+          }
+
+          B(2);
+          const _Ratio = R / U * Y;
+          for (let tIdx = 0; tIdx < c; tIdx += 1) {
+            const eIdx = tIdx * d, aIdx = (tIdx >> 1) * g;
+            for (let tVal = 0; tVal < d; tVal += 1) {
+              const nIdx = eIdx + tVal,
+                oVal = u[aIdx + (tVal >> 1)],
+                rVal = k[oVal >= 1 ? 255 : 255 * oVal | 0],
+                lVal = m[nIdx] * rVal * _Ratio,
+                iVal = p[nIdx] * rVal * _Ratio,
+                hVal = M[nIdx] * rVal * _Ratio;
+
+              v[nIdx] = 4278190080 | D[hVal >= R ? R - 1 : 0 | hVal] << 16 | D[iVal >= R ? R - 1 : 0 | iVal] << 8 | D[lVal >= R ? R - 1 : 0 | lVal];
+            }
+          }
+
+          return n.putImageData(y, 0, 0), { unit: a, cosT: l };
+        },
+        J = t => { O.zoom = clamp(O.zoom * t, .45, 5); },
+        K = e => { e.preventDefault(); J(Math.exp(.0015 * -e.deltaY)); t.pointer.lastActive = t.time; },
+        Q = t => {
+          $.set(t.pointerId, { x: t.clientX, y: t.clientY });
+          if (2 === $.size) {
+            const [tVal, eVal] = [...$.values()];
+            _ = Math.hypot(tVal.x - eVal.x, tVal.y - eVal.y);
+          }
+        },
+        V = t => {
+          if ($.has(t.pointerId) && ($.set(t.pointerId, { x: t.clientX, y: t.clientY }), 2 === $.size && _ > 0)) {
+            const [tVal, eVal] = [...$.values()], aVal = Math.hypot(tVal.x - eVal.x, tVal.y - eVal.y);
+            J(aVal / _);
+            _ = aVal;
+          }
+        },
+        Z = t => { $.delete(t.pointerId); _ = 0; };
+
+      return t.preview || (t.canvas.addEventListener("wheel", K, { passive: !1 }), t.canvas.addEventListener("pointerdown", Q), t.canvas.addEventListener("pointermove", V), t.canvas.addEventListener("pointerup", Z), t.canvas.addEventListener("pointercancel", Z)), {
+        resize() { j(); q(); b || X(); },
+        frame(n, s) {
+          const cVal = .95 + .32 * Math.sin(.09 * s),
+            mVal = .4 + .02 * s;
+
+          Y || !t.idle ? O.blend = Math.max(0, O.blend - 4 * n) : O.blend = Math.min(1, O.blend + .3 * n);
+          const pVal = O.blend * O.blend * (3 - 2 * O.blend);
+          O.tilt = lerp(O.userTilt, cVal, pVal);
+          O.spin = lerp(O.userSpin, mVal, pVal);
+          pVal > .999 && (O.userTilt = O.tilt, O.userSpin = O.spin);
+
+          const { unit: MVal, cosT: uVal } = H(n, s);
+
+          e.imageSmoothingEnabled = !0;
+          e.drawImage(h, 0, 0, t.width, t.height);
+          e.globalCompositeOperation = "lighter";
+          e.drawImage(a, 0, 0, t.width, t.height);
+
+          r.globalCompositeOperation = "copy";
+          r.drawImage(a, 0, 0, o.width, o.height);
+          i.globalCompositeOperation = "copy";
+          i.drawImage(o, 0, 0, l.width, l.height);
+
+          e.globalAlpha = .9;
+          e.drawImage(o, 0, 0, t.width, t.height);
+          e.globalAlpha = 1;
+          e.drawImage(l, 0, 0, t.width, t.height);
+
+          const wVal = MVal * (t.width / d) * .35;
+          e.save();
+          e.translate(t.width / 2, t.height / 2);
+          e.scale(1, Math.max(.25, .8 * Math.abs(uVal) + .2));
+          const gGradient = e.createRadialGradient(0, 0, 0, 0, 0, wVal);
+          gGradient.addColorStop(0, "rgba(255, 245, 200, 0.45)");
+          gGradient.addColorStop(.3, "rgba(220, 160, 240, 0.18)");
+          gGradient.addColorStop(1, "rgba(140, 90, 220, 0)");
+          e.globalAlpha = 1;
+          e.fillStyle = gGradient;
+          e.fillRect(-wVal, -wVal, 2 * wVal, 2 * wVal);
+          e.restore();
+
+          e.globalCompositeOperation = "source-over";
+          e.globalAlpha = 1;
+        },
+        pointerdown(t) {
+          $.size > 1 || (Y = { x: t.x, y: t.y, tilt: O.tilt, spin: O.spin }, O.userTilt = O.tilt, O.userSpin = O.spin, O.blend = 0);
+        },
+        pointermove(e) {
+          !Y || !e.down || $.size > 1 || (O.userSpin = Y.spin + (e.x - Y.x) / t.width * Math.PI * 1.5, O.userTilt = clamp(Y.tilt + (e.y - Y.y) / t.height * 2.2, 0, 1.5));
+        },
+        pointerup() { Y = null; },
+        keydown: t => "+" === t.key || "=" === t.key ? (J(1.15), !0) : "-" === t.key && (J(1 / 1.15), !0),
+        stop() {
+          t.canvas.removeEventListener("wheel", K, { passive: !1 });
+          t.canvas.removeEventListener("pointerdown", Q);
+          t.canvas.removeEventListener("pointermove", V);
+          t.canvas.removeEventListener("pointerup", Z);
+          t.canvas.removeEventListener("pointercancel", Z);
+        }
+      };
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const canvas = document.getElementById("canvas");
+      run(canvas, createGalaxyApp);
+    });
+  </script>
+</body>
+</html>
