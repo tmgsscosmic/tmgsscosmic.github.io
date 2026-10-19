@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/jpeg" href="https://tmgsscosmic.github.io/IMG/smallIcon.jpg">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -67,7 +68,7 @@
             allow="geolocation; microphone; camera; midi; encrypted-media; autoplay; clipboard-write; clipboard-read"
             sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation"
             class="scaled-iframe relative z-20"
-            onload="hideLoading()"
+            onload="checkIframeContent()"
         ></iframe>
     </main>
 
@@ -80,6 +81,25 @@
                 setTimeout(() => {
                     loader.style.pointerEvents = 'none';
                 }, 500);
+            }
+        }
+
+        // Detect target string inside iframe DOM and alert user
+        function checkIframeContent() {
+            hideLoading();
+            try {
+                const iframe = document.getElementById('appIframe');
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+                if (iframeDoc && iframeDoc.body) {
+                    const htmlContent = iframeDoc.body.innerHTML;
+                    if (htmlContent.includes('<strong>www.google.com</strong>')) {
+                        alert('請切換至學校 Google 帳號 (Please switch to your school Google account)!');
+                    }
+                }
+            } catch (err) {
+                // Cross-Origin security policies will block DOM inspection if domains do not match
+                console.warn('Unable to inspect iframe DOM due to same-origin restrictions:', err);
             }
         }
 
