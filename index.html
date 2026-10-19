@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cosmic Spiral Galaxy</title>
+  <title>Cosmic TMGSS</title>
+  <link rel="icon" type="image/jpeg" href="IMG/smallIcon.jpg">
   <style>
     * {
       margin: 0;
@@ -28,7 +29,7 @@
       top: 0;
       left: 0;
       width: 100%;
-      height: 50vh; /* Lay between 1:2 ratio vertically */
+      height: 50vh;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -38,9 +39,9 @@
       padding: 20px;
     }
     .title-svg {
-      width: 70%; /* Scaled down to 70% horizontal */
-      max-width: 500px;
-      max-height: 22vh; /* Scaled down vertically so it fits neatly */
+      width: 70%;
+      max-width: 750px; /* Scaled x1.5 */
+      max-height: 33vh;  /* Scaled x1.5 */
       height: auto;
       object-fit: contain;
       pointer-events: auto;
@@ -50,27 +51,42 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
-      margin-top: 15px;
+      gap: 18px; /* Scaled x1.5 */
+      margin-top: 22px;
       width: 100%;
       pointer-events: auto;
     }
     .menu-btn {
       background: rgba(255, 255, 255, 0.12);
       color: #ffffff;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      padding: 8px 24px;
-      border-radius: 20px;
+      border: 1.5px solid rgba(255, 255, 255, 0.35);
+      padding: 12px 36px; /* Scaled x1.5 */
+      border-radius: 30px; /* Scaled x1.5 */
       text-decoration: none;
-      font-size: clamp(14px, 1.5vw, 16px);
+      font-size: clamp(20px, 2.25vw, 24px); /* Scaled x1.5 */
       transition: all 0.3s ease;
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(6px);
       text-align: center;
     }
     .menu-btn:hover {
       background: rgba(255, 255, 255, 0.25);
       border-color: rgba(255, 255, 255, 0.6);
       transform: scale(1.05);
+    }
+    .site-footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 28px;
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 14px;
+      z-index: 10;
+      pointer-events: none;
+      letter-spacing: 0.5px;
     }
   </style>
 </head>
@@ -79,6 +95,11 @@
     <img src="IMG/CosmicTitle.svg" class="title-svg" alt="Cosmic Title">
     <div id="menuContainer" class="menu-container"></div>
   </div>
+
+  <footer class="site-footer">
+    <span class="footer-left">Made By Carlos Cosmic@TMGSS</span>
+    <span class="footer-right">To Infinity And Beyond Cosmic Is Never Gone</span>
+  </footer>
 
   <canvas id="canvas"></canvas>
 
@@ -103,8 +124,8 @@
     // Image List for dynamic floating objects
     const floatImages = ["IMG/1.png", "IMG/2.png"];
 
-    // Dynamically create floating, moving, and draggable images
-    floatImages.forEach((src) => {
+    // Dynamically create floating images rotating around the spiral
+    floatImages.forEach((src, index) => {
       const img = document.createElement("img");
       img.src = src;
       img.style.position = "absolute";
@@ -112,35 +133,30 @@
       img.style.maxHeight = "100px";
       img.style.width = "auto";
       img.style.height = "auto";
-      img.style.left = Math.random() * (window.innerWidth - 120) + "px";
-      img.style.top = Math.random() * (window.innerHeight - 120) + "px";
       img.style.cursor = "grab";
       img.style.zIndex = "5";
       img.style.userSelect = "none";
 
       document.body.appendChild(img);
 
-      let x = parseFloat(img.style.left);
-      let y = parseFloat(img.style.top);
-      let vx = (Math.random() - 0.5) * 1.5;
-      let vy = (Math.random() - 0.5) * 1.5;
+      let angle = index * Math.PI + Math.random() * 0.5;
+      let radiusX = 220 + index * 90;
+      let radiusY = radiusX * 0.45; // Elliptical tilt matching galaxy tilt
+      let speed = 0.004 + Math.random() * 0.002; // Slow rotation speed
       let isDragging = false;
       let dragStartX = 0;
       let dragStartY = 0;
 
       function floatAnimation() {
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        const w = img.offsetWidth || 80;
+        const h = img.offsetHeight || 80;
+
         if (!isDragging) {
-          x += vx;
-          y += vy;
-
-          const w = img.offsetWidth || 80;
-          const h = img.offsetHeight || 80;
-
-          if (x <= 0 || x + w >= window.innerWidth) vx *= -1;
-          if (y <= 0 || y + h >= window.innerHeight) vy *= -1;
-
-          x = Math.max(0, Math.min(window.innerWidth - w, x));
-          y = Math.max(0, Math.min(window.innerHeight - h, y));
+          angle += speed;
+          const x = centerX + Math.cos(angle) * radiusX - w / 2;
+          const y = centerY + Math.sin(angle) * radiusY - h / 2;
 
           img.style.left = x + "px";
           img.style.top = y + "px";
@@ -152,15 +168,16 @@
       img.addEventListener("pointerdown", (e) => {
         isDragging = true;
         img.style.cursor = "grabbing";
-        dragStartX = e.clientX - x;
-        dragStartY = e.clientY - y;
+        const rect = img.getBoundingClientRect();
+        dragStartX = e.clientX - rect.left;
+        dragStartY = e.clientY - rect.top;
         img.setPointerCapture(e.pointerId);
       });
 
       img.addEventListener("pointermove", (e) => {
         if (isDragging) {
-          x = e.clientX - dragStartX;
-          y = e.clientY - dragStartY;
+          const x = e.clientX - dragStartX;
+          const y = e.clientY - dragStartY;
           img.style.left = x + "px";
           img.style.top = y + "px";
         }
@@ -170,6 +187,17 @@
         if (isDragging) {
           isDragging = false;
           img.style.cursor = "grab";
+          // Recalculate orbit radii & angle from new released position
+          const centerX = window.innerWidth / 2;
+          const centerY = window.innerHeight / 2;
+          const w = img.offsetWidth || 80;
+          const h = img.offsetHeight || 80;
+          const curX = parseFloat(img.style.left) + w / 2 - centerX;
+          const curY = parseFloat(img.style.top) + h / 2 - centerY;
+
+          angle = Math.atan2(curY / 0.45, curX);
+          radiusX = Math.max(100, Math.hypot(curX, curY / 0.45));
+          radiusY = radiusX * 0.45;
         }
       };
 
@@ -345,6 +373,7 @@
           const i = 1;
           let h = 0;
 
+          // Main Spiral Arms - Gradient: Gold Core -> Deep Cosmic Blue Outer Arms
           for (let t = 0; t < a; t += 1, h += 1) {
             let tVal = 2;
             for (; tVal > 1.15; ) tVal = .24 * -Math.log((1 - .999 * Math.random()) * (1 - .999 * Math.random()));
@@ -357,16 +386,18 @@
 
             const rNorm = clamp(tVal / 1.15, 0, 1);
             let rCol, gCol, bCol;
-            if (rNorm < 0.32) {
-              const u = rNorm / 0.32;
-              rCol = lerp(1.0, 0.82, u);
-              gCol = lerp(0.92, 0.58, u);
-              bCol = lerp(0.62, 0.96, u);
+            if (rNorm < 0.35) {
+              const u = rNorm / 0.35;
+              // Gold Core Blend
+              rCol = lerp(1.0, 0.92, u);
+              gCol = lerp(0.84, 0.62, u);
+              bCol = lerp(0.28, 0.88, u);
             } else {
-              const u = (rNorm - 0.32) / 0.68;
-              rCol = lerp(0.82, 0.22, u);
-              gCol = lerp(0.58, 0.55, u);
-              bCol = lerp(0.96, 1.0, u);
+              const u = (rNorm - 0.35) / 0.65;
+              // Deep Blue Outer Arms
+              rCol = lerp(0.92, 0.08, u);
+              gCol = lerp(0.62, 0.22, u);
+              bCol = lerp(0.88, 0.98, u);
             }
 
             S[h] = intensity * lerp(1, rCol, e * tVal);
@@ -375,6 +406,7 @@
             L[h] = 0;
           }
 
+          // Dense Core Scatter - Warm Gold
           for (let t = 0; t < n; t += 1, h += 1) {
             const tVal = .1 * Math.abs(gauss());
             b[h] = tVal;
@@ -382,31 +414,34 @@
             T[h] = .07 * gauss() * (1 - 3 * tVal);
             const e = (.06 + .08 * Math.random()) * i;
             S[h] = e * 1.0;
-            I[h] = e * 0.88;
-            F[h] = e * 0.58;
+            I[h] = e * 0.82;
+            F[h] = e * 0.28;
             L[h] = 1;
           }
 
+          // Flashing Dust - Deep Blue & Purple Accents
           for (let t = 0; t < o; t += 1, h += 1) {
             L[h] = 2;
             W(h);
             z[h] = Math.random() * P[h];
             const tVal = (.6 + .7 * Math.random()) * i;
-            S[h] = .75 * tVal;
-            I[h] = .52 * tVal;
-            F[h] = 1.15 * tVal;
+            S[h] = .25 * tVal;
+            I[h] = .42 * tVal;
+            F[h] = 1.25 * tVal;
           }
 
+          // Bright Accent Stars - Warm Gold
           for (let t = 0; t < r; t += 1, h += 1) {
             L[h] = 3;
             W(h);
             z[h] = Math.random() * P[h];
             const tVal = (.35 + .4 * Math.random()) * i;
-            S[h] = 1.2 * tVal;
-            I[h] = 0.95 * tVal;
-            F[h] = .5 * tVal;
+            S[h] = 1.25 * tVal;
+            I[h] = 0.98 * tVal;
+            F[h] = .32 * tVal;
           }
 
+          // Ambient Background Haze
           for (let t = 0; t < l; t += 1, h += 1) {
             L[h] = 4;
             W(h);
@@ -420,9 +455,9 @@
           s.setTransform(t.dpr, 0, 0, t.dpr, 0, 0);
 
           const e = s.createRadialGradient(t.width / 2, t.height / 2, 0, t.width / 2, t.height / 2, .75 * Math.max(t.width, t.height));
-          e.addColorStop(0, "#1a0c36");
-          e.addColorStop(0.5, "#0d0726");
-          e.addColorStop(1, "#04020a");
+          e.addColorStop(0, "#160a2e");
+          e.addColorStop(0.5, "#08041c");
+          e.addColorStop(1, "#030108");
           s.fillStyle = e;
           s.fillRect(0, 0, t.width, t.height);
 
@@ -434,11 +469,11 @@
 
             const starType = Math.random();
             if (starType < 0.45) {
-              s.fillStyle = `rgba(${220 + Math.round(35 * n)}, ${180 + Math.round(50 * n)}, 255, ${.2 + .7 * n})`;
+              s.fillStyle = `rgba(${255}, ${220 + Math.round(25 * n)}, ${120 + Math.round(50 * n)}, ${.2 + .7 * n})`;
             } else if (starType < 0.8) {
-              s.fillStyle = `rgba(255, ${225 + Math.round(30 * n)}, ${170 + Math.round(65 * n)}, ${.2 + .7 * n})`;
+              s.fillStyle = `rgba(${100 + Math.round(50 * n)}, ${150 + Math.round(50 * n)}, 255, ${.2 + .7 * n})`;
             } else {
-              s.fillStyle = `rgba(${170 + Math.round(60 * n)}, ${210 + Math.round(45 * n)}, 255, ${.2 + .7 * n})`;
+              s.fillStyle = `rgba(${180 + Math.round(60 * n)}, ${180 + Math.round(45 * n)}, 255, ${.2 + .7 * n})`;
             }
             s.fillRect(xPos, yPos, n > .8 ? 1.8 : 1, n > .8 ? 1.8 : 1);
           }
@@ -613,9 +648,9 @@
           e.translate(t.width / 2, t.height / 2);
           e.scale(1, Math.max(.25, .8 * Math.abs(uVal) + .2));
           const gGradient = e.createRadialGradient(0, 0, 0, 0, 0, wVal);
-          gGradient.addColorStop(0, "rgba(255, 245, 200, 0.45)");
-          gGradient.addColorStop(.3, "rgba(220, 160, 240, 0.18)");
-          gGradient.addColorStop(1, "rgba(140, 90, 220, 0)");
+          gGradient.addColorStop(0, "rgba(255, 235, 170, 0.5)");
+          gGradient.addColorStop(.3, "rgba(100, 140, 255, 0.22)");
+          gGradient.addColorStop(1, "rgba(30, 20, 100, 0)");
           e.globalAlpha = 1;
           e.fillStyle = gGradient;
           e.fillRect(-wVal, -wVal, 2 * wVal, 2 * wVal);
