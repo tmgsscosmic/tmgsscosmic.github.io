@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TMGSS Cosmic</title>
+  <title>Cosmic Spiral Galaxy</title>
   <style>
     * {
       margin: 0;
@@ -28,18 +28,21 @@
       top: 0;
       left: 0;
       width: 100%;
-      height: 50vh;
+      height: 50vh; /* Lay between 1:2 ratio vertically */
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 10;
       pointer-events: none;
+      padding: 20px;
     }
     .title-svg {
-      width: 70%;
-      max-width: 70vw;
+      width: 70%; /* Scaled down to 70% horizontal */
+      max-width: 500px;
+      max-height: 22vh; /* Scaled down vertically so it fits neatly */
       height: auto;
+      object-fit: contain;
       pointer-events: auto;
       display: block;
     }
@@ -47,8 +50,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
-      margin-top: 20px;
+      gap: 12px;
+      margin-top: 15px;
       width: 100%;
       pointer-events: auto;
     }
@@ -56,10 +59,10 @@
       background: rgba(255, 255, 255, 0.12);
       color: #ffffff;
       border: 1px solid rgba(255, 255, 255, 0.3);
-      padding: 8px 20px;
+      padding: 8px 24px;
       border-radius: 20px;
       text-decoration: none;
-      font-size: clamp(14px, 1.8vw, 18px);
+      font-size: clamp(14px, 1.5vw, 16px);
       transition: all 0.3s ease;
       backdrop-filter: blur(4px);
       text-align: center;
@@ -83,10 +86,10 @@
     // Menu Dictionary
     const menuDictionary = {
       "Instagram": "https://www.instagram.com/tmgss_cosmic/",
-      "萬聖節鬼屋預約": "/halloweenbooking/"
+      "萬聖節鬼屋預約": "/HalloweenBooking/"
     };
 
-    // Dynamically create menu buttons placed under SVG title aligned vertically
+    // Dynamically create menu buttons placed under SVG title
     const menuContainer = document.getElementById("menuContainer");
     Object.entries(menuDictionary).forEach(([text, link]) => {
       const btn = document.createElement("a");
@@ -105,6 +108,10 @@
       const img = document.createElement("img");
       img.src = src;
       img.style.position = "absolute";
+      img.style.maxWidth = "100px";
+      img.style.maxHeight = "100px";
+      img.style.width = "auto";
+      img.style.height = "auto";
       img.style.left = Math.random() * (window.innerWidth - 120) + "px";
       img.style.top = Math.random() * (window.innerHeight - 120) + "px";
       img.style.cursor = "grab";
@@ -126,8 +133,8 @@
           x += vx;
           y += vy;
 
-          const w = img.offsetWidth || 100;
-          const h = img.offsetHeight || 100;
+          const w = img.offsetWidth || 80;
+          const h = img.offsetHeight || 80;
 
           if (x <= 0 || x + w >= window.innerWidth) vx *= -1;
           if (y <= 0 || y + h >= window.innerHeight) vy *= -1;
